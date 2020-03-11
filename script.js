@@ -1,4 +1,4 @@
-let img
+let img;
 let imgProp = {
     left: 10,
     top: 100,
