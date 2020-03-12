@@ -23,6 +23,11 @@ function createContainer() {
     container.style.border = "3px solid black";
     container.style.overflow = "hidden";
     container.style.margin = "100px auto";
+    container.style.textAlign = "center";
+    let instruction = document.createElement('p');
+    instruction.style.marginTop= "50px";
+    instruction.innerText = "Utilisez les flèches pour vous déplacer et le bouton gauche de la souris pour sauter";
+    container.appendChild(instruction);
     body.appendChild(container);
 }
 
@@ -210,7 +215,7 @@ function kill() {
 function gagne() {
     let gagner = document.createElement('p');
     gagner.style.fontSize = "50px";
-    gagner.style.marginTop = "200px";
+    gagner.style.marginTop = "150px";
     gagner.innerText= "Gagné !"
     let rejouer = document.createElement('p');
     rejouer.style.fontSize = "30px";
@@ -227,7 +232,6 @@ function gagne() {
     rejouer.addEventListener("mousedown", () => {
         location.reload()
     })
-    container.style.textAlign = "center";
     container.appendChild(gagner)
     container.appendChild(rejouer)
 }
