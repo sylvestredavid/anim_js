@@ -8,12 +8,13 @@ let imgProp = {
     runG: './img/gauche2.png',
     dead: './img/stop.png',
 }
-let carreaux = [];
+let goombas = [];
 let colision = false;
-let isJump, recule, isGameOver = false;
+let isJump, recule, isGameOver, isGrounded = false;
 let body;
 let container;
 let dernierePositionGoomba = 190;
+let floors = [];
 
 function createContainer() {
     container = document.createElement('div');
@@ -25,7 +26,7 @@ function createContainer() {
     container.style.margin = "100px auto";
     container.style.textAlign = "center";
     let instruction = document.createElement('p');
-    instruction.style.marginTop= "50px";
+    instruction.style.marginTop = "50px";
     instruction.innerText = "Utilisez les flèches pour vous déplacer et le bouton gauche de la souris pour sauter";
     container.appendChild(instruction);
     body.appendChild(container);
@@ -40,16 +41,27 @@ function createImg() {
     container.appendChild(img);
 }
 
-function createFloor() {
+function createWorld() {
+    let sol1 = createFloor(0, 0, 500, false)
+    let sol2 = createFloor(0, 550, 500, false)
+    let platform1 = createFloor(120, 300, 100, true)
+    floors.push(platform1)
+    floors.push(sol1)
+    floors.push(sol2)
+    floors.forEach(f => {
+        container.appendChild(f)
+    })
+}
+
+function createFloor(bottom, left, width, isPlateform) {
     let sol = document.createElement('div');
     sol.style.position = 'absolute';
-    sol.style.bottom = "0px";
-    sol.style.height = "51px";
+    sol.style.bottom = bottom + "px";
+    sol.style.height = isPlateform? "10px" : "51px";
     sol.style.backgroundColor = "green";
-    sol.style.boxSizing = "border-box";
-    sol.style.left = "0";
-    sol.style.right = "0";
-    container.appendChild(sol);
+    sol.style.left = left + "px";
+    sol.style.width = width + "px";
+    return sol;
 }
 
 function generateGoombas() {
@@ -68,7 +80,7 @@ function createGoomba() {
     goomba.style.bottom = "51px";
     goomba.style.left = left + "px";
     container.appendChild(goomba);
-    carreaux.push(goomba);
+    goombas.push(goomba);
 }
 
 function run() {
@@ -76,11 +88,14 @@ function run() {
     window.addEventListener("keydown", (e) => {
         if (e.code === "ArrowRight" && !isGameOver) {
             recule = false;
-            carreaux.forEach((c) => {
+            goombas.forEach((c) => {
                 c.style.left = (c.offsetLeft - 4) + "px"
             })
+            floors.forEach((f) => {
+                f.style.left = (f.offsetLeft - 4) + "px"
+            })
             gameOver()
-            if (!isJump && !isGameOver) {
+            if (!isJump && !isGameOver && isGrounded) {
                 if (i % 3 === 0) {
                     img.src = imgProp.runD
                 } else {
@@ -89,11 +104,14 @@ function run() {
             }
         } else if (e.code === "ArrowLeft" && !isGameOver) {
             recule = true;
-            carreaux.forEach((c) => {
+            goombas.forEach((c) => {
                 c.style.left = (c.offsetLeft + 4) + "px"
             })
+            floors.forEach((f) => {
+                f.style.left = (f.offsetLeft + 4) + "px"
+            })
             gameOver()
-            if (!isJump && !isGameOver) {
+            if (!isJump && !isGameOver && isGrounded) {
                 if (i % 3 === 0) {
                     img.src = imgProp.runG
                 } else {
@@ -115,52 +133,70 @@ function run() {
 
 function jump() {
     document.addEventListener('mousedown', (e) => {
-        isJump = true;
-        if (recule) {
-            img.src = imgProp.runG
-        } else {
-            img.src = imgProp.runD
-        }
-        let jump = setInterval(() => {
-            if (imgProp.bottom <= 120) {
-                imgProp.bottom += 1;
-                img.style.bottom = imgProp.bottom + "px";
+        if (!isJump) {
+            const hauteur = imgProp.bottom + 100;
+            isJump = true;
+            isGrounded = false;
+            if (recule) {
+                img.src = imgProp.runG
             } else {
-                clearInterval(jump)
+                img.src = imgProp.runD
             }
-            if (colision) {
-                clearInterval(jump)
-            }
-        }, 10);
-        setTimeout(() => {
             let jump = setInterval(() => {
-                if (imgProp.bottom >= 50) {
-                    imgProp.bottom -= 1;
+                if (imgProp.bottom <= hauteur) {
+                    imgProp.bottom += 1;
                     img.style.bottom = imgProp.bottom + "px";
-                    kill()
                 } else {
-                    imgProp.bottom = 50;
-                    img.style.bottom = imgProp.bottom + "px";
                     clearInterval(jump)
                 }
                 if (colision) {
                     clearInterval(jump)
                 }
-            }, 10);
-        }, 800);
-        setTimeout(() => {
-            isJump = false;
-            if (recule) {
-                img.src = imgProp.idleG
-            } else {
-                img.src = imgProp.idleD
-            }
-        }, 1500)
+            }, 5);
+            setTimeout(() => {
+                isJump = false
+            }, 600);
+        }
     })
 }
 
+function gravity() {
+    let jump = setInterval(() => {
+        if(!isJump) {
+            imgProp.bottom -= 1;
+            img.style.bottom = imgProp.bottom + "px";
+            console.log(imgProp.bottom)
+            kill()
+            floors.forEach(f => {
+                const bottom = (container.clientHeight - f.offsetTop) - f.clientHeight;
+                if (((imgProp.left + img.clientWidth >= f.offsetLeft) && (imgProp.left <= f.offsetLeft + f.clientWidth)) && (imgProp.bottom <= (f.clientHeight + bottom)) && !(imgProp.bottom <= bottom) && !isGameOver) {
+                    imgProp.bottom = f.clientHeight + bottom;
+                    img.style.bottom = imgProp.bottom + "px";
+                    if(!isGrounded) {
+                        if (recule) {
+                            img.src = imgProp.idleG
+                        } else {
+                            img.src = imgProp.idleD
+                        }
+                        isGrounded = true;
+                    }
+                }
+            });
+            if (imgProp.bottom < 15) {
+                isGameOver = true;
+                img.src = imgProp.dead;
+                setTimeout(() => {
+                    clearInterval(jump)
+                    location.reload();
+                }, 500)
+            }
+        }
+
+    }, 5);
+}
+
 function gameOver() {
-    carreaux.forEach(carreau => {
+    goombas.forEach(carreau => {
         if (((imgProp.left + img.clientWidth >= carreau.offsetLeft) && (imgProp.left <= carreau.offsetLeft + carreau.clientWidth)) && (imgProp.bottom <= (carreau.clientHeight + 50)) && !isJump) {
             console.log('game over');
             isGameOver = true;
@@ -191,19 +227,19 @@ function gameOver() {
 }
 
 function kill() {
-    carreaux.forEach(carreau => {
+    goombas.forEach(carreau => {
         if (((imgProp.left + img.clientWidth >= carreau.offsetLeft) && (imgProp.left <= carreau.offsetLeft + carreau.clientWidth)) && (imgProp.bottom <= (carreau.clientHeight + 50)) && !isGameOver) {
             console.log('kill');
             imgProp.bottom += 20;
             img.style.bottom = imgProp.bottom + "px";
-            const index = carreaux.indexOf(carreau);
-            if(index > -1) {
-                carreaux.splice(index, 1)
-                console.log(carreaux)
+            const index = goombas.indexOf(carreau);
+            if (index > -1) {
+                goombas.splice(index, 1)
+                console.log(goombas)
             }
             setTimeout(() => {
                 carreau.remove()
-                if(carreaux.length === 0) {
+                if (goombas.length === 0) {
                     gagne();
                     isGameOver = true;
                 }
@@ -216,11 +252,11 @@ function gagne() {
     let gagner = document.createElement('p');
     gagner.style.fontSize = "50px";
     gagner.style.marginTop = "150px";
-    gagner.innerText= "Gagné !"
+    gagner.innerText = "Gagné !"
     let rejouer = document.createElement('p');
     rejouer.style.fontSize = "30px";
     rejouer.style.marginTop = "10px";
-    rejouer.innerText= "Rejouer?";
+    rejouer.innerText = "Rejouer?";
     rejouer.addEventListener("mouseenter", () => {
         rejouer.style.color = "red";
         rejouer.style.cursor = "pointer";
@@ -244,8 +280,9 @@ function randomNumber(min, max) {
     body = document.getElementById("body");
     createContainer()
     createImg();
-    createFloor()
+    createWorld()
     generateGoombas();
+    gravity()
     run()
     jump()
 
