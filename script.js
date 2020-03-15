@@ -14,7 +14,7 @@ let isJump, recule, isGameOver, isGrounded = false;
 let body;
 let container;
 let floors = [];
-let goombasContainer
+let goombasContainer;
 
 function createContainer() {
     container = document.createElement('div');
@@ -46,7 +46,7 @@ function createFloor(left, width, isPlateform) {
     sol.style.position = 'absolute';
     sol.style.bottom = isPlateform ? "120px" : "0px";
     sol.style.height = isPlateform ? "10px" : "51px";
-    sol.style.backgroundColor = "green";
+    sol.style.background = "url(./img/sol.png) top center repeat-x";
     sol.style.left = left + "px";
     sol.style.width = width + "px";
     return sol;
@@ -57,7 +57,7 @@ function createWorld() {
     floors.push(createFloor(600, 500, false))
     floors.push(createFloor(1200, 230, true))
     floors.push(createFloor(1600, 800, false))
-    floors.push(createFloor(2550, 450, false))
+    floors.push(createFloor(2500, 500, false))
     floors.push(createFloor(3100, 100, true))
     floors.push(createFloor(3300, 900, false))
     floors.push(createFloor(3500, 100, true))
@@ -75,7 +75,7 @@ function generateGoombas() {
     goombas.push(createGoomba(1500, 100, true))
     goombas.push(createGoomba(1800, 51, false))
     goombas.push(createGoomba(2200, 51, false))
-    goombas.push(createGoomba(2450, 55, true))
+    goombas.push(createGoomba(2425, 55, true))
     goombas.push(createGoomba(2700, 51, false))
     goombas.push(createGoomba(2900, 51, false))
     goombas.push(createGoomba(3090, 130, false))
@@ -109,6 +109,9 @@ function createGoomba(left, bottom, isAile) {
     return goomba;
 }
 
+/**
+ * fonction qui anime les goombas suivant si ils sont ailés ou pas
+ */
 function animeGoobas() {
     goombas.forEach(g => {
         const initialBottom = (container.clientHeight - g.offsetTop) - g.clientHeight;
@@ -122,6 +125,7 @@ function animeGoobas() {
                 }
             )
         } else {
+            // on gere la direction de l'image avec un setInterval qui donne l'impréssion que le goomba tourne
             g.style.transform = 'rotateY(180deg)'
             setTimeout(() => {
                 g.style.transform = 'rotateY(0)'
@@ -144,15 +148,20 @@ function animeGoobas() {
     })
 }
 
+/**
+ * fonction pour faire avancer le joueur, en fait c'est le paysage qui bouge ;-)
+ */
 function run() {
     let i = 0;
     window.addEventListener("keydown", (e) => {
+        // si on appuie sur la touche droite, on deplace les goombas et les sols de 4px vers la gauche
         if (e.code === "ArrowRight" && !isGameOver) {
             recule = false;
             goombasContainer.style.left = (goombasContainer.offsetLeft - 4) + "px"
             floors.forEach((f) => {
                 f.style.left = (f.offsetLeft - 4) + "px"
             })
+            // on appel la fonction qui verifie si on se fait tuer par un goomba
             killed()
             if (!isJump && !isGameOver && isGrounded) {
                 if (i % 3 === 0) {
@@ -161,12 +170,13 @@ function run() {
                     img.src = imgProp.idleD
                 }
             }
-        } else if (e.code === "ArrowLeft" && !isGameOver) {
+        } else if (e.code === "ArrowLeft" && !isGameOver) { // si on appuie sur la touche gauche, on deplace les goombas et les sols de 4px vers la droite
             recule = true;
             goombasContainer.style.left = (goombasContainer.offsetLeft + 4) + "px"
             floors.forEach((f) => {
                 f.style.left = (f.offsetLeft + 4) + "px"
             })
+            // on appel la fonction qui verifie si on se fait tuer par un goomba
             killed()
             if (!isJump && !isGameOver && isGrounded) {
                 if (i % 3 === 0) {
@@ -188,8 +198,12 @@ function run() {
     })
 }
 
+/**
+ * fonction pour faire sauter le personnage
+ */
 function jump() {
     document.addEventListener('mousedown', (e) => {
+        // si on est au sol et si on est pas en train de sauter, on utilise un setInterval pour faire monter le personnage
         if (isGrounded && !isJump) {
             const hauteur = imgProp.bottom + 100;
             isJump = true;
@@ -205,18 +219,16 @@ function jump() {
                     img.style.bottom = imgProp.bottom + "px";
                 } else {
                     clearInterval(jump)
-                }
-                if (colision) {
-                    clearInterval(jump)
+                    isJump = false
                 }
             }, 5);
-            setTimeout(() => {
-                isJump = false
-            }, 600);
         }
     })
 }
 
+/**
+ * fonction qui simule la gravité, si la position left du person n'est pas supérieur à la position left d'un des sols et la position left du person n'est pas inférieur a la position lef du sol plus la largeur du sol, le personnage perd des pixels au bottom
+ */
 function gravity() {
     let jump = setInterval(() => {
         if (!isJump) {
@@ -251,6 +263,10 @@ function gravity() {
     }, 5);
 }
 
+/**
+ * fonction qui vérifie si le perso se fait tuer par un goomba, si la position left du perso + sa largeur est spuérieur ou égale a la position left du goomba et la position left du perso est inérieur ou agale a la position left
+ * du goomba + sa largeur et que la position bottom du perso est inférieur a la position bottom du goomba + sa hauteur, le personnage meurt
+ */
 function killed() {
     goombas.forEach(g => {
         const bottom = (container.clientHeight - g.offsetTop) - g.clientHeight;
@@ -281,6 +297,11 @@ function killed() {
     })
 }
 
+
+/**
+ * fonction qui vérifie si le perso tue un goomba, si la position left du perso + sa largeur est spuérieur ou égale a la position left du goomba et la position left du perso est inérieur ou agale a la position left
+ * du goomba + sa largeur et que la position bottom du perso est inférieur a la position bottom du goomba + sa hauteur, le perso tue le goomba (cette fonction est appelée lors de la descente d'un saut
+ */
 function killGoomba() {
     goombas.forEach(g => {
         const bottom = (container.clientHeight - g.offsetTop) - g.clientHeight;
@@ -301,6 +322,9 @@ function killGoomba() {
     })
 }
 
+/**
+ * fonction qui affiche gagné
+ */
 function gagne() {
     let gagner = document.createElement('p');
     gagner.style.fontSize = "50px";
