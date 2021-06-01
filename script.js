@@ -157,9 +157,9 @@ function run() {
         // si on appuie sur la touche droite, on deplace les goombas et les sols de 4px vers la gauche
         if (e.code === "ArrowRight" && !isGameOver) {
             recule = false;
-            goombasContainer.style.left = (goombasContainer.offsetLeft - 4) + "px"
+            goombasContainer.style.left = (goombasContainer.offsetLeft - 8) + "px"
             floors.forEach((f) => {
-                f.style.left = (f.offsetLeft - 4) + "px"
+                f.style.left = (f.offsetLeft - 8) + "px"
             })
             // on appel la fonction qui verifie si on se fait tuer par un goomba
             killed()
@@ -172,9 +172,9 @@ function run() {
             }
         } else if (e.code === "ArrowLeft" && !isGameOver) { // si on appuie sur la touche gauche, on deplace les goombas et les sols de 4px vers la droite
             recule = true;
-            goombasContainer.style.left = (goombasContainer.offsetLeft + 4) + "px"
+            goombasContainer.style.left = (goombasContainer.offsetLeft + 8) + "px"
             floors.forEach((f) => {
-                f.style.left = (f.offsetLeft + 4) + "px"
+                f.style.left = (f.offsetLeft + 8) + "px"
             })
             // on appel la fonction qui verifie si on se fait tuer par un goomba
             killed()
